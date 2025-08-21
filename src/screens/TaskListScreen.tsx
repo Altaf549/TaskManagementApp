@@ -71,43 +71,61 @@ const TaskListScreen = () => {
   }, [deleteTask]);
 
   const renderTaskItem = ({item}: {item: Task}) => (
-    <List.Item
-      title={item.title}
-      description={item.description}
-      left={props => (
-        <IconButton
-          icon={item.isCompleted ? 'check-circle' : 'circle-outline'}
-          iconColor={item.isCompleted ? '#4CAF50' : '#757575'}
-          onPress={() => toggleTaskCompletion(item.id)}
-          {...props}
-        />
-      )}
-      right={props => (
-        <View style={styles.taskActions}>
-          <Text style={styles.taskDate}>
-            {format(new Date(item.updatedAt), 'MMM d, yyyy')}
+    <View style={[
+      styles.taskCard,
+      item.isCompleted && styles.completedTask
+    ]}>
+      <View style={styles.taskContent}>
+      <MaterialIcons
+        name={item.isCompleted ? 'check-box' : 'check-box-outline-blank'}
+        size={24}
+        color={item.isCompleted ? '#4CAF50' : '#757575'}
+        style={styles.checkbox}
+        onPress={() => toggleTaskCompletion(item.id)}
+      />
+        <View style={styles.taskTextContainer}>
+          <Text 
+            style={[
+              styles.taskTitle,
+              item.isCompleted && styles.completedTitle
+            ]}
+            numberOfLines={1}
+          >
+            {item.title}
           </Text>
+          {item.description ? (
+            <Text 
+              style={[
+                styles.taskDescription,
+                item.isCompleted && styles.completedDescription
+              ]}
+              numberOfLines={2}
+            >
+              {item.description}
+            </Text>
+          ) : null}
+          <Text style={styles.taskDate}>
+            {format(new Date(item.updatedAt), 'MMM d, yyyy • h:mm a')}
+          </Text>
+        </View>
+        <View style={styles.taskActions}>
           <IconButton
-            {...props}
-            icon="pencil"
-            onPress={() =>
-              navigation.navigate('AddEditTask', {taskId: item.id})
-            }
+            icon={({ size, color }) => (
+              <MaterialIcons name="edit" size={size + 4} color="#B8860B" />
+            )}
+            onPress={() => navigation.navigate('AddEditTask', {taskId: item.id})}
+            style={styles.actionButton}
           />
           <IconButton
-            {...props}
-            icon="delete"
+            icon={({ size, color }) => (
+              <MaterialIcons name="delete" size={size + 4} color="red" />
+            )}
             onPress={() => handleDeleteTask(item.id, item.title)}
+            style={styles.actionButton}
           />
         </View>
-      )}
-      style={[
-        styles.taskItem,
-        item.isCompleted && styles.completedTask,
-      ]}
-      titleStyle={item.isCompleted ? styles.completedTitle : null}
-      descriptionStyle={item.isCompleted ? styles.completedDescription : null}
-    />
+      </View>
+    </View>
   );
 
   if (isLoading && !refreshing) {
@@ -167,9 +185,46 @@ const TaskListScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
-    paddingTop: 0,
-    paddingBottom: 20, // Add bottom padding to prevent content from being hidden
+    backgroundColor: '#f8f9fa',
+    padding: 16,
+  },
+  taskCard: {
+    backgroundColor: 'white',
+    borderRadius: 12,
+    marginBottom: 12,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+  },
+  taskContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 12,
+  },
+  taskTextContainer: {
+    flex: 1,
+    marginLeft: 12,
+    marginRight: 8,
+  },
+  taskTitle: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#212121',
+    marginBottom: 4,
+  },
+  taskDescription: {
+    fontSize: 14,
+    color: '#616161',
+    marginBottom: 4,
+  },
+  actionButton: {
+    margin: 0,
+  },
+  checkbox: {
+    margin: 0,
+    marginRight: 0,
   },
   loadingContainer: {
     flex: 1,
