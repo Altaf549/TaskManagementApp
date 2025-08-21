@@ -14,6 +14,7 @@ import {Task} from '../models/Task';
 import {FAB, List, IconButton, Menu, Button, Appbar, Avatar, Text, useTheme} from 'react-native-paper';
 import {format} from 'date-fns';
 import {useAuth} from '../contexts/AuthContext';
+import MaterialIcons from '@react-native-vector-icons/material-icons';
 
 const TaskListScreen = () => {
   const theme = useTheme();
@@ -154,7 +155,9 @@ const TaskListScreen = () => {
       />
       <FAB
         style={styles.fab}
-        icon="plus"
+        icon={({ size, color }) => (
+          <MaterialIcons name="add" size={size + 4} color="white" />
+        )}
         onPress={() => navigation.navigate('AddEditTask')}
       />
     </View>
@@ -166,6 +169,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#f5f5f5',
     paddingTop: 0,
+    paddingBottom: 20, // Add bottom padding to prevent content from being hidden
   },
   loadingContainer: {
     flex: 1,
@@ -230,6 +234,7 @@ const styles = StyleSheet.create({
   },
   flatList: {
     flex: 1,
+    paddingBottom: 80, // Add padding to account for bottom navigation and FAB
   },
   listContent: {
     padding: 16,
@@ -266,8 +271,9 @@ const styles = StyleSheet.create({
     position: 'absolute',
     margin: 16,
     right: 0,
-    bottom: 0,
+    bottom: 70, // Raise FAB to be above the bottom navigation
     backgroundColor: '#6200ee',
+    elevation: 4,
   },
   menuButton: {
     marginRight: 8,
