@@ -3,7 +3,6 @@ import {
   View,
   FlatList,
   StyleSheet,
-  Text,
   ActivityIndicator,
   Alert,
 } from 'react-native';
@@ -12,11 +11,12 @@ import type {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import type {AppStackParamList} from '../types/navigation';
 import {useTasks} from '../hooks/useTasks';
 import {Task} from '../models/Task';
-import {FAB, List, IconButton, Menu, Button, Appbar} from 'react-native-paper';
+import {FAB, List, IconButton, Menu, Button, Appbar, Avatar, Text, useTheme} from 'react-native-paper';
 import {format} from 'date-fns';
 import {useAuth} from '../contexts/AuthContext';
 
 const TaskListScreen = () => {
+  const theme = useTheme();
   const navigation = useNavigation<NativeStackNavigationProp<AppStackParamList>>();
   const {signOut, user} = useAuth();
   const {
@@ -130,26 +130,12 @@ const TaskListScreen = () => {
     );
   }
 
+  const getUserInitials = (email?: string) => {
+    return email ? email.charAt(0).toUpperCase() : 'U';
+  };
+
   return (
     <View style={styles.container}>
-      <Appbar.Header mode="small" style={styles.appBar}>
-        <Appbar.Content title="My Tasks" />
-        <Menu
-          visible={menuVisible}
-          onDismiss={() => setMenuVisible(false)}
-          anchor={
-            <Appbar.Action
-              icon="dots-vertical"
-              onPress={() => setMenuVisible(true)}
-            />
-          }>
-          <Menu.Item
-            leadingIcon="logout"
-            onPress={handleSignOut}
-            title="Sign Out"
-          />
-        </Menu>
-      </Appbar.Header>
       <FlatList
         data={tasks}
         keyExtractor={item => item.id.toString()}
@@ -178,7 +164,7 @@ const TaskListScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: '#f5f5f5',
     paddingTop: 0,
   },
   loadingContainer: {
@@ -198,11 +184,49 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   appBar: {
-    backgroundColor: '#fff',
     elevation: 0,
-    shadowOpacity: 0,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
+    paddingRight: 8,
+  },
+  welcomeText: {
+    color: 'white',
+    fontSize: 14,
+    opacity: 0.9,
+  },
+  emailText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: 'bold',
+    maxWidth: 200,
+  },
+  avatar: {
+    marginLeft: 8,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+  },
+  taskItem: {
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+    marginVertical: 6,
+    marginHorizontal: 12,
+    borderRadius: 12,
+    backgroundColor: '#fff',
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
+  completedTask: {
+    opacity: 0.7,
+    backgroundColor: '#f5f5f5',
+  },
+  completedTitle: {
+    textDecorationLine: 'line-through',
+    color: '#9e9e9e',
+    fontWeight: '400',
+  },
+  completedDescription: {
+    textDecorationLine: 'line-through',
+    color: '#bdbdbd',
   },
   flatList: {
     flex: 1,
@@ -210,31 +234,16 @@ const styles = StyleSheet.create({
   listContent: {
     padding: 16,
   },
-  taskItem: {
-    marginBottom: 8,
-    backgroundColor: 'white',
-    borderRadius: 8,
-    elevation: 2,
-  },
-  completedTask: {
-    opacity: 0.7,
-  },
-  completedTitle: {
-    textDecorationLine: 'line-through',
-    color: '#9e9e9e',
-  },
-  completedDescription: {
-    textDecorationLine: 'line-through',
-    color: '#bdbdbd',
-  },
   taskActions: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: 8,
   },
   taskDate: {
     fontSize: 12,
-    color: '#757575',
-    marginRight: 8,
+    color: '#9e9e9e',
+    marginRight: 4,
+    fontStyle: 'italic',
   },
   emptyContainer: {
     flex: 1,
