@@ -18,10 +18,16 @@
     "@react-native/new-app-screen": "0.81.0",
     "@react-navigation/native": "^7.1.17",
     "@react-navigation/native-stack": "^7.3.25",
+    "@react-navigation/stack": "^7.4.7",
+    "@realm/react": "^0.11.0",
+    "@types/react-native-vector-icons": "^6.4.18",
+    "date-fns": "^4.1.0",
     "react": "19.1.0",
     "react-native": "0.81.0",
+    "react-native-paper": "^5.14.5",
     "react-native-safe-area-context": "^5.6.0",
-    "react-native-screens": "^4.14.1"
+    "react-native-screens": "^4.14.1",
+    "realm": "^20.2.0"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",

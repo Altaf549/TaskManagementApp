@@ -3,6 +3,7 @@ import { StatusBar, useColorScheme } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AuthProvider } from './src/contexts/AuthContext';
 import { AppNavigator } from './src/navigation/AppNavigator';
+import { RealmProvider } from './src/config/realm';
 
 function App() {
   const isDarkMode = useColorScheme() === 'dark';
@@ -10,9 +11,11 @@ function App() {
   return (
     <SafeAreaProvider>
       <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
-      <AuthProvider>
-        <AppNavigator />
-      </AuthProvider>
+      <RealmProvider>
+        <AuthProvider>
+          <AppNavigator />
+        </AuthProvider>
+      </RealmProvider>
     </SafeAreaProvider>
   );
 }
