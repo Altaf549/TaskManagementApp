@@ -23,13 +23,32 @@ class TaskService {
     const now = new Date();
     
     try {
+      console.log('=== FIREBASE DEBUG ===');
+      console.log('Current user ID:', userId);
+      console.log('Firebase app initialized:', !!auth().app);
+      console.log('Firebase auth current user:', auth().currentUser?.uid);
+      console.log('Task data to save:', JSON.stringify(taskData, null, 2));
+      
+      // Check Firebase connection
+      try {
+        await auth().currentUser?.getIdToken(true);
+        console.log('Firebase auth token refresh successful');
+      } catch (authError) {
+        console.error('Firebase auth token refresh failed:', authError);
+        throw new Error('Authentication failed. Please sign in again.');
+      }
+      
       // Create in Firestore
+      console.log('Attempting to save to Firestore...');
       const docRef = await this.tasksCollection.add({
         ...taskData,
         userId,
         createdAt: now,
         updatedAt: now,
       });
+      
+      console.log('✅ Task successfully saved to Firestore with ID:', docRef.id);
+      console.log('=== END FIREBASE DEBUG ===');
 
       // Create in Realm
       const task: Task = {
@@ -51,6 +70,9 @@ class TaskService {
 
       return task;
     } catch (error) {
+      console.error('Error creating task in Firestore:', error);
+      console.log('Falling back to local storage...');
+      
       // If Firestore fails, save locally with isSynced: false
       const localId = new BSON.ObjectId().toHexString();
       const localTask: Task = {
