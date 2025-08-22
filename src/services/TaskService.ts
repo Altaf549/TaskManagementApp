@@ -3,6 +3,18 @@ import {Task} from '../models/Task';
 import {auth, firestore} from '../config/firebase';
 import {TaskSchema} from '../models/TaskRealm';
 
+interface FirestoreTask {
+  id: string;
+  title: string;
+  description?: string;
+  isCompleted: boolean;
+  userId: string;
+  firestoreId?: string;
+  createdAt: any; // Firestore Timestamp or Date
+  updatedAt: any; // Firestore Timestamp or Date
+  isSynced?: boolean;
+}
+
 class TaskService {
   private realm: Realm;
   private firestore = firestore();
@@ -174,19 +186,12 @@ class TaskService {
     const userId = this.getCurrentUserId();
     const unsyncedTasks = this.realm
       .objects('Task')
-      .filtered('isSynced == false');
 
-    for (const task of unsyncedTasks) {
+    // Process each unsynced task
+    for (const task of Array.from(unsyncedTasks)) {
       try {
-        if (task.isDeleted) {
-          if (task.firestoreId && typeof task.firestoreId === 'string' && task.firestoreId.trim() !== '') {
-            await this.tasksCollection.doc(task.firestoreId).delete();
-          }
-          this.realm.write(() => {
-            this.realm.delete(task);
-          });
-        } if (task.firestoreId && typeof task.firestoreId === 'string' && task.firestoreId.trim() !== '') {
-          // Update existing task
+        if (task.firestoreId && typeof task.firestoreId === 'string' && task.firestoreId.trim() !== '') {
+          // Update existing task in Firestore
           await this.tasksCollection.doc(task.firestoreId).update({
             title: task.title,
             description: task.description,
@@ -197,7 +202,7 @@ class TaskService {
             task.isSynced = true;
           });
         } else {
-          // Create new task
+          // Create new task in Firestore
           const docRef = await this.tasksCollection.add({
             title: task.title,
             description: task.description,
@@ -212,8 +217,70 @@ class TaskService {
           });
         }
       } catch (error) {
-        console.error('Error syncing task:', error);
+        console.error('Error syncing task to Firestore:', error);
       }
+    }
+
+    // 2. Fetch tasks from Firestore and sync to Realm
+    try {
+      console.log('Fetching tasks from Firestore...');
+      const snapshot = await this.tasksCollection
+        .where('userId', '==', userId)
+        .orderBy('updatedAt', 'desc')
+        .get();
+
+      const firestoreTasks: FirestoreTask[] = snapshot.docs.map(doc => ({
+        id: doc.id,
+        firestoreId: doc.id,
+        ...doc.data() as Omit<FirestoreTask, 'id' | 'firestoreId'>
+      }));
+
+      console.log(`Fetched ${firestoreTasks.length} tasks from Firestore`);
+
+      // Process Firestore tasks
+      this.realm.write(() => {
+        firestoreTasks.forEach((firestoreTask: FirestoreTask) => {
+          // Check if task exists in Realm by firestoreId
+          const existingTask = this.realm
+            .objects<TaskSchema>('Task')
+            .filtered('firestoreId == $0', firestoreTask.id as string)[0];
+
+          const updatedAt = firestoreTask.updatedAt?.toDate ? 
+            firestoreTask.updatedAt.toDate() : 
+            new Date(firestoreTask.updatedAt || new Date());
+          
+          const createdAt = firestoreTask.createdAt?.toDate ? 
+            firestoreTask.createdAt.toDate() : 
+            new Date(firestoreTask.createdAt || new Date());
+
+          if (existingTask) {
+            // Update existing task if Firestore version is newer
+            if (existingTask.updatedAt < updatedAt) {
+              existingTask.title = firestoreTask.title;
+              existingTask.description = firestoreTask.description;
+              existingTask.isCompleted = firestoreTask.isCompleted;
+              existingTask.updatedAt = updatedAt;
+              existingTask.isSynced = true;
+            }
+          } else {
+            // Create new task in Realm
+            this.realm.create('Task', {
+              _id: new BSON.ObjectId(),
+              title: firestoreTask.title,
+              description: firestoreTask.description,
+              isCompleted: firestoreTask.isCompleted,
+              userId: firestoreTask.userId,
+              firestoreId: firestoreTask.id,
+              createdAt: createdAt,
+              updatedAt: updatedAt,
+              isSynced: true,
+            });
+          }
+        });
+      });
+    } catch (error) {
+      console.error('Error fetching tasks from Firestore:', error);
+      throw error;
     }
   }
 }
