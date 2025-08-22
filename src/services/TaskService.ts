@@ -146,13 +146,25 @@ class TaskService {
   }
 
   async deleteTask(taskId: string): Promise<void> {
-    const task = this.realm.objectForPrimaryKey('Task', taskId);
-    if (!task) return;
+    // First try to find by _id (BSON.ObjectId)
+    let task = this.realm.objectForPrimaryKey('Task', new BSON.ObjectId(taskId));
+    
+    // If not found by _id, try to find by firestoreId
+    if (!task) {
+      const tasks = this.realm.objects('Task').filtered('firestoreId == $0', taskId);
+      task = tasks.length > 0 ? tasks[0] : null;
+    }
+    
+    if (!task) {
+      console.warn(`Task with ID ${taskId} not found`);
+      return;
+    }
 
     try {
       // Delete from Firestore if synced
-      if (task.firestoreId && typeof task.firestoreId === 'string' && task.firestoreId.trim() !== '') {
-        await this.tasksCollection.doc(task.firestoreId).delete();
+      const firestoreId = task.firestoreId || taskId;
+      if (firestoreId && typeof firestoreId === 'string' && firestoreId.trim() !== '') {
+        await this.tasksCollection.doc(firestoreId).delete();
       }
 
       // Delete from Realm
@@ -160,6 +172,7 @@ class TaskService {
         this.realm.delete(task);
       });
     } catch (error) {
+      console.error('Error deleting task:', error);
       // If Firestore delete fails, mark for deletion
       this.realm.write(() => {
         task.isDeleted = true;
