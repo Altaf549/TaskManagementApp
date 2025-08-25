@@ -8,6 +8,7 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../types/navigation';
 import { useNavigation } from '@react-navigation/native';
 import MaterialIcons from '@react-native-vector-icons/material-icons';
+import auth from '@react-native-firebase/auth';
 
 // Validation schema
 const ForgotPasswordSchema = Yup.object().shape({
@@ -28,15 +29,33 @@ export const ForgotPasswordScreen = () => {
   const handleSubmit = async (values: FormValues) => {
     try {
       setIsSubmitting(true);
-      // TODO: Implement password reset logic here
-      // await auth().sendPasswordResetEmail(values.email);
+      await auth().sendPasswordResetEmail(values.email);
       
       // Show success message
-      Alert.alert('Success', 'Password reset email sent. Please check your inbox.');
-      navigation.goBack();
-    } catch (error) {
+      Alert.alert(
+        'Check Your Email',
+        'We have sent a password reset link to your email address. Please check your inbox and follow the instructions to reset your password.',
+        [
+          {
+            text: 'OK',
+            onPress: () => navigation.goBack(),
+          },
+        ]
+      );
+    } catch (error: any) {
       console.error('Error sending password reset email:', error);
-      Alert.alert('Error', 'Failed to send password reset email. Please try again.');
+      let errorMessage = 'Failed to send password reset email. Please try again.';
+      
+      // Handle specific error cases
+      if (error.code === 'auth/user-not-found') {
+        errorMessage = 'There is no account with this email address.';
+      } else if (error.code === 'auth/invalid-email') {
+        errorMessage = 'The email address is not valid.';
+      } else if (error.code === 'auth/too-many-requests') {
+        errorMessage = 'Too many requests. Please try again later.';
+      }
+      
+      Alert.alert('Error', errorMessage);
     } finally {
       setIsSubmitting(false);
     }

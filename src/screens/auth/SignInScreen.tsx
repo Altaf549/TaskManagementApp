@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, Alert, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
+import { View, StyleSheet, Alert, KeyboardAvoidingView, Platform, ScrollView, TouchableOpacity } from 'react-native';
 import { useAuth } from '../../contexts/AuthContext';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../types/navigation';
 import { useNavigation } from '@react-navigation/native';
 import { Text, TextInput, Button, useTheme, HelperText } from 'react-native-paper';
+import auth from '@react-native-firebase/auth';
 import { Formik, FormikHelpers, FormikProps as FormikBaseProps } from 'formik';
 import * as Yup from 'yup';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -37,8 +38,15 @@ export const SignInScreen = () => {
   const handleSignIn = async (values: FormValues, actions: FormikHelpers<FormValues>) => {
     try {
       await signIn(values.email, values.password);
+      // Check if email is verified after successful sign-in
+      const currentUser = auth().currentUser;
+      if (currentUser && !currentUser.emailVerified) {
+        navigation.replace('EmailVerification');
+      }
     } catch (error) {
       Alert.alert('Error', 'Failed to sign in. Please check your credentials.');
+    } finally {
+      actions.setSubmitting(false);
     }
   };
 
@@ -59,7 +67,7 @@ export const SignInScreen = () => {
             validationSchema={SignInSchema}
             onSubmit={handleSignIn}
           >
-            {({ handleChange, handleBlur, handleSubmit, values, errors, touched, isSubmitting }: FormikProps) => (
+            {({ handleChange, handleBlur, handleSubmit, values, errors, touched, isSubmitting, isValid }: FormikProps) => (
               <View style={styles.formContainer}>
                 <View style={styles.inputContainer}>
                   <TextInput
@@ -128,24 +136,22 @@ export const SignInScreen = () => {
                 </View>
 
                 <Button
-                    mode="text"
-                    onPress={() => navigation.navigate('ForgotPassword')}
-                    style={styles.forgotPasswordButton}
-                    labelStyle={{ color: theme.colors.primary }}
-                    compact
-                  >
-                    Forgot Password?
-                  </Button>
+                  mode="text"
+                  onPress={() => navigation.navigate('ForgotPassword')}
+                  style={styles.forgotPasswordButton}
+                  labelStyle={{ color: theme.colors.primary }}
+                >
+                  Forgot Password?
+                </Button>
 
                 <Button
                   mode="contained"
                   onPress={handleSubmit}
-                  style={[styles.button, { backgroundColor: theme.colors.primary }]}
-                  labelStyle={styles.buttonLabel}
-                  loading={loading}
-                  disabled={loading}
+                  loading={isSubmitting}
+                  disabled={!isValid || isSubmitting}
+                  style={styles.button}
                 >
-                  {!loading && 'Sign In'}
+                  Sign In
                 </Button>
 
                 <View style={styles.footer}>
@@ -205,17 +211,24 @@ const styles = StyleSheet.create({
   button: {
     marginTop: 24,
     paddingVertical: 8,
-    borderRadius: 8,
   },
-  buttonLabel: {
-    fontSize: 16,
-    paddingVertical: 6,
+  forgotPasswordLink: {
+    marginTop: 16,
+    alignItems: 'center',
+  },
+  forgotPasswordText: {
+    fontSize: 14,
+    fontWeight: '500',
   },
   forgotPasswordButton: {
     alignSelf: 'flex-end',
     marginTop: 0,
     marginBottom: 8,
     height: 36,
+  },
+  buttonLabel: {
+    fontSize: 16,
+    paddingVertical: 6,
   },
   footer: {
     flexDirection: 'row',

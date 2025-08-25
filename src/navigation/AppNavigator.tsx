@@ -7,6 +7,8 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useAuth } from '../contexts/AuthContext';
 import { SignInScreen } from '../screens/auth/SignInScreen';
 import { SignUpScreen } from '../screens/auth/SignUpScreen';
+import { ForgotPasswordScreen } from '../screens/auth/ForgotPasswordScreen';
+import { EmailVerificationScreen } from '../screens/auth/EmailVerificationScreen';
 import { HomeScreen } from '../screens/HomeScreen';
 import TaskListScreen from '../screens/TaskListScreen';
 import AddEditTaskScreen from '../screens/AddEditTaskScreen';
@@ -15,7 +17,7 @@ import { RootStackParamList } from '../types/navigation';
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 export const AppNavigator = () => {
-  const { user, loading, signOut } = useAuth();
+  const { user, loading, signOut, isEmailVerified } = useAuth();
 
   if (loading) {
     return null;
@@ -54,7 +56,7 @@ export const AppNavigator = () => {
       }}
     >
       <Stack.Navigator>
-        {user ? (
+        {user && isEmailVerified ? (
           // Authenticated screens
           <>
             <Stack.Screen 
@@ -130,12 +132,36 @@ export const AppNavigator = () => {
             <Stack.Screen 
               name="SignIn" 
               component={SignInScreen} 
-              options={{ headerShown: false }}
+              options={{ headerShown: false }} 
+            />
+            <Stack.Screen 
+              name="EmailVerification" 
+              component={EmailVerificationScreen} 
+              options={{ 
+                title: 'Verify Email',
+                headerBackVisible: false,
+                headerShown: false
+              }} 
             />
             <Stack.Screen 
               name="SignUp" 
               component={SignUpScreen} 
               options={{ headerShown: false }}
+            />
+            <Stack.Screen 
+              name="ForgotPassword" 
+              component={ForgotPasswordScreen} 
+              options={{ 
+                title: 'Forgot Password',
+                headerShown: true,
+                headerStyle: {
+                  backgroundColor: '#6200ee',
+                },
+                headerTintColor: '#fff',
+                headerTitleStyle: {
+                  fontWeight: '600',
+                },
+              }}
             />
           </>
         )}

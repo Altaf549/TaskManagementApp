@@ -2,6 +2,7 @@ export type AuthStackParamList = {
   SignIn: undefined;
   SignUp: undefined;
   ForgotPassword: undefined;
+  EmailVerification: undefined;
 };
 
 export type AppStackParamList = {
