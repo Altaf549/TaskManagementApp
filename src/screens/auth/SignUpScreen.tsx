@@ -1,118 +1,269 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
-import { useAuth } from '../../contexts/AuthContext';
+import { View, StyleSheet, Alert, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
+import { Text, TextInput, Button, useTheme, HelperText } from 'react-native-paper';
+import { Formik, FormikHelpers, FormikProps } from 'formik';
+import * as Yup from 'yup';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { RootStackParamList } from '../../types/navigation';
 import { useNavigation } from '@react-navigation/native';
+import { useAuth } from '../../contexts/AuthContext';
+import MaterialIcons from '@react-native-vector-icons/material-icons';
+
+// Validation schema
+const SignUpSchema = Yup.object().shape({
+  email: Yup.string().email('Please enter a valid email').required('Email is required'),
+  password: Yup.string()
+    .min(6, 'Password must be at least 6 characters')
+    .required('Password is required'),
+  confirmPassword: Yup.string()
+    .oneOf([Yup.ref('password')], 'Passwords must match')
+    .required('Please confirm your password'),
+});
+
+type SignUpScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'SignUp'>;
+
+interface FormValues {
+  email: string;
+  password: string;
+  confirmPassword: string;
+}
+
 
 export const SignUpScreen = () => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
+  const theme = useTheme();
+  const navigation = useNavigation<SignUpScreenNavigationProp>();
+  const [secureTextEntry, setSecureTextEntry] = useState(true);
+  const [confirmSecureTextEntry, setConfirmSecureTextEntry] = useState(true);
   const { signUp, loading } = useAuth();
-  const navigation = useNavigation();
 
-  const handleSignUp = async () => {
-    if (!email || !password || !confirmPassword) {
-      Alert.alert('Error', 'Please fill in all fields');
-      return;
-    }
-
-    if (password !== confirmPassword) {
-      Alert.alert('Error', 'Passwords do not match');
-      return;
-    }
-
+  const handleSignUp = async (values: FormValues, actions: FormikHelpers<FormValues>) => {
     try {
-      await signUp(email, password);
+      await signUp(values.email, values.password);
     } catch (error) {
       Alert.alert('Error', 'Failed to create account. Please try again.');
+      console.error('Sign up error:', error);
     }
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Create Account</Text>
-      
-      <TextInput
-        style={styles.input}
-        placeholder="Email"
-        value={email}
-        onChangeText={setEmail}
-        autoCapitalize="none"
-        keyboardType="email-address"
-      />
-      
-      <TextInput
-        style={styles.input}
-        placeholder="Password"
-        value={password}
-        onChangeText={setPassword}
-        secureTextEntry
-      />
-      
-      <TextInput
-        style={styles.input}
-        placeholder="Confirm Password"
-        value={confirmPassword}
-        onChangeText={setConfirmPassword}
-        secureTextEntry
-      />
-      
-      <TouchableOpacity 
-        style={[styles.button, loading && styles.buttonDisabled]} 
-        onPress={handleSignUp}
-        disabled={loading}
+    <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={styles.keyboardAvoidingView}
       >
-        <Text style={styles.buttonText}>{loading ? 'Creating Account...' : 'Sign Up'}</Text>
-      </TouchableOpacity>
-      
-      <TouchableOpacity onPress={() => navigation.goBack()}>
-        <Text style={styles.link}>Already have an account? Sign in</Text>
-      </TouchableOpacity>
-    </View>
+        <ScrollView contentContainerStyle={styles.scrollView}>
+          <View style={styles.header}>
+            <Text style={[styles.title, { color: theme.colors.onBackground }]}>Create Account</Text>
+            <Text style={[styles.subtitle, { color: theme.colors.onSurfaceVariant }]}>
+              Sign up to get started
+            </Text>
+          </View>
+          <Formik
+            initialValues={{ email: '', password: '', confirmPassword: '' }}
+            validationSchema={SignUpSchema}
+            onSubmit={handleSignUp}
+          >
+            {(formikProps: FormikProps<FormValues>) => {
+              const {
+                handleChange,
+                handleBlur,
+                handleSubmit,
+                values,
+                errors,
+                touched,
+                isSubmitting,
+              } = formikProps;
+              return (
+              <View style={styles.formContainer}>
+                <View style={styles.inputContainer}>
+                  <TextInput
+                    label="Email"
+                    value={values.email}
+                    onChangeText={handleChange('email')}
+                    onBlur={handleBlur('email')}
+                    mode="outlined"
+                    autoCapitalize="none"
+                    keyboardType="email-address"
+                    error={touched.email && !!errors.email}
+                    style={styles.input}
+                    left={<TextInput.Icon icon={({ size, color }) => (
+                        <MaterialIcons name="email" size={size + 4} />
+                    )} />}
+                    theme={{
+                      colors: {
+                        primary: theme.colors.primary,
+                        text: theme.colors.onSurface,
+                      },
+                    }}
+                  />
+                  {touched.email && errors.email && (
+                    <HelperText type="error" visible={!!errors.email}>
+                      {errors.email}
+                    </HelperText>
+                  )}
+                </View>
+
+                <View style={styles.inputContainer}>
+                  <TextInput
+                    label="Password"
+                    value={values.password}
+                    onChangeText={handleChange('password')}
+                    onBlur={handleBlur('password')}
+                    mode="outlined"
+                    secureTextEntry={secureTextEntry}
+                    error={touched.password && !!errors.password}
+                    style={styles.input}
+                    left={<TextInput.Icon icon={({ size, color }) => (
+                      <MaterialIcons name="lock" size={size + 4} />
+                    )} />}
+                    right={
+                      <TextInput.Icon
+                        icon={() => (
+                          <MaterialIcons
+                            name={secureTextEntry ? 'visibility-off' : 'visibility'}
+                            size={24}
+                          />
+                        )}
+                        onPress={() => setSecureTextEntry(!secureTextEntry)}
+                      />
+                    }
+                    theme={{
+                      colors: {
+                        primary: theme.colors.primary,
+                        text: theme.colors.onSurface,
+                      },
+                    }}
+                  />
+                  {touched.password && errors.password && (
+                    <HelperText type="error" visible={!!errors.password}>
+                      {errors.password}
+                    </HelperText>
+                  )}
+                </View>
+
+                <View style={styles.inputContainer}>
+                  <TextInput
+                    label="Confirm Password"
+                    value={values.confirmPassword}
+                    onChangeText={handleChange('confirmPassword')}
+                    onBlur={handleBlur('confirmPassword')}
+                    mode="outlined"
+                    secureTextEntry={confirmSecureTextEntry}
+                    error={touched.confirmPassword && !!errors.confirmPassword}
+                    style={styles.input}
+                    left={<TextInput.Icon icon={({ size, color }) => (
+                      <MaterialIcons name="lock" size={size + 4} />
+                    )} />}
+                    right={
+                      <TextInput.Icon
+                        icon={() => (
+                          <MaterialIcons
+                            name={secureTextEntry ? 'visibility-off' : 'visibility'}
+                            size={24}
+                          />
+                        )}
+                        onPress={() => setSecureTextEntry(!secureTextEntry)}
+                      />
+                    }
+                    theme={{
+                      colors: {
+                        primary: theme.colors.primary,
+                        text: theme.colors.onSurface,
+                      },
+                    }}
+                  />
+                  {touched.confirmPassword && errors.confirmPassword && (
+                    <HelperText type="error" visible={!!errors.confirmPassword}>
+                      {errors.confirmPassword}
+                    </HelperText>
+                  )}
+                </View>
+
+                <Button
+                  mode="contained"
+                  onPress={handleSubmit}
+                  style={[styles.button, { backgroundColor: theme.colors.primary }]}
+                  labelStyle={styles.buttonLabel}
+                  loading={isSubmitting}
+                  disabled={isSubmitting}
+                >
+                  {!isSubmitting && 'Sign Up'}
+                </Button>
+
+                <View style={styles.footer}>
+                  <Text style={[styles.footerText, { color: theme.colors.onSurfaceVariant }]}>
+                    Already have an account?{' '}
+                  </Text>
+                  <Button
+                    mode="text"
+                    onPress={() => navigation.navigate('SignIn')}
+                    labelStyle={{ color: theme.colors.primary }}
+                    compact
+                  >
+                    Sign In
+                  </Button>
+                </View>
+              </View>
+            )}}
+          </Formik>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  header: {
+    marginBottom: 32,
+  },
+  keyboardAvoidingView: {
+    flex: 1,
+  },
+  scrollView: {
+    flexGrow: 1,
     justifyContent: 'center',
-    padding: 20,
-    backgroundColor: '#fff',
+    padding: 24,
   },
   title: {
-    fontSize: 28,
+    fontSize: 32,
     fontWeight: 'bold',
-    marginBottom: 30,
     textAlign: 'center',
+    marginBottom: 8,
+  },
+  subtitle: {
+    fontSize: 16,
+    textAlign: 'center',
+    marginBottom: 32,
+  },
+  formContainer: {
+    width: '100%',
+  },
+  inputContainer: {
+    marginBottom: 16,
   },
   input: {
-    height: 50,
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 8,
-    paddingHorizontal: 15,
-    marginBottom: 15,
-    fontSize: 16,
+    backgroundColor: 'transparent',
   },
   button: {
-    backgroundColor: '#34C759',
-    padding: 15,
+    marginTop: 24,
+    paddingVertical: 8,
     borderRadius: 8,
+  },
+  buttonLabel: {
+    fontSize: 16,
+    paddingVertical: 6,
+  },
+  footer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
     alignItems: 'center',
-    marginTop: 10,
+    marginTop: 24,
   },
-  buttonDisabled: {
-    backgroundColor: '#A7E8C2',
-  },
-  buttonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  link: {
-    color: '#007AFF',
-    textAlign: 'center',
-    marginTop: 20,
-    fontSize: 16,
+  footerText: {
+    fontSize: 14,
   },
 });

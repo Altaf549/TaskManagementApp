@@ -1,108 +1,229 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import { View, StyleSheet, Alert, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
 import { useAuth } from '../../contexts/AuthContext';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../types/navigation';
 import { useNavigation } from '@react-navigation/native';
+import { Text, TextInput, Button, useTheme, HelperText } from 'react-native-paper';
+import { Formik, FormikHelpers, FormikProps as FormikBaseProps } from 'formik';
+import * as Yup from 'yup';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import MaterialIcons from '@react-native-vector-icons/material-icons';
+
+
+// Validation schema
+const SignInSchema = Yup.object().shape({
+  email: Yup.string().email('Please enter a valid email').required('Email is required'),
+  password: Yup.string()
+    .min(6, 'Password must be at least 6 characters')
+    .required('Password is required'),
+});
 
 type SignInScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'SignIn'>;
 
+interface FormValues {
+  email: string;
+  password: string;
+}
+
+type FormikProps = FormikBaseProps<FormValues>;
+
 export const SignInScreen = () => {
+  const theme = useTheme();
   const navigation = useNavigation<SignInScreenNavigationProp>();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [secureTextEntry, setSecureTextEntry] = useState(true);
   const { signIn, loading } = useAuth();
 
-  const handleSignIn = async () => {
-    if (!email || !password) {
-      Alert.alert('Error', 'Please fill in all fields');
-      return;
-    }
-
+  const handleSignIn = async (values: FormValues, actions: FormikHelpers<FormValues>) => {
     try {
-      await signIn(email, password);
+      await signIn(values.email, values.password);
     } catch (error) {
       Alert.alert('Error', 'Failed to sign in. Please check your credentials.');
     }
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Welcome Back</Text>
-      
-      <TextInput
-        style={styles.input}
-        placeholder="Email"
-        value={email}
-        onChangeText={setEmail}
-        autoCapitalize="none"
-        keyboardType="email-address"
-      />
-      
-      <TextInput
-        style={styles.input}
-        placeholder="Password"
-        value={password}
-        onChangeText={setPassword}
-        secureTextEntry
-      />
-      
-      <TouchableOpacity 
-        style={[styles.button, loading && styles.buttonDisabled]} 
-        onPress={handleSignIn}
-        disabled={loading}
+    <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
+      <KeyboardAvoidingView 
+        style={styles.keyboardAvoidingView}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
-        <Text style={styles.buttonText}>{loading ? 'Signing In...' : 'Sign In'}</Text>
-      </TouchableOpacity>
-      
-      <TouchableOpacity onPress={() => navigation.navigate('SignUp')}>
-        <Text style={styles.link}>Don't have an account? Sign up</Text>
-      </TouchableOpacity>
-    </View>
+        <ScrollView contentContainerStyle={styles.scrollView}>
+          <Text style={[styles.title, { color: theme.colors.onBackground }]}>Welcome Back</Text>
+          <Text style={[styles.subtitle, { color: theme.colors.onSurfaceVariant }]}>
+            Sign in to continue
+          </Text>
+
+          <Formik
+            initialValues={{ email: '', password: '' }}
+            validationSchema={SignInSchema}
+            onSubmit={handleSignIn}
+          >
+            {({ handleChange, handleBlur, handleSubmit, values, errors, touched, isSubmitting }: FormikProps) => (
+              <View style={styles.formContainer}>
+                <View style={styles.inputContainer}>
+                  <TextInput
+                    label="Email"
+                    mode="outlined"
+                    value={values.email}
+                    onChangeText={handleChange('email')}
+                    onBlur={handleBlur('email')}
+                    autoCapitalize="none"
+                    keyboardType="email-address"
+                    error={touched.email && !!errors.email}
+                    left={<TextInput.Icon icon={({ size, color }) => (
+                        <MaterialIcons name="email" size={size + 4} />
+                    )} />}
+                    style={styles.input}
+                    theme={{
+                      colors: {
+                        primary: theme.colors.primary,
+                        text: theme.colors.onSurface,
+                      },
+                    }}
+                  />
+                  {touched.email && errors.email && (
+                    <HelperText type="error" visible={!!errors.email}>
+                      {errors.email}
+                    </HelperText>
+                  )}
+                </View>
+
+                <View style={styles.inputContainer}>
+                  <TextInput
+                    label="Password"
+                    mode="outlined"
+                    value={values.password}
+                    onChangeText={handleChange('password')}
+                    onBlur={handleBlur('password')}
+                    secureTextEntry={secureTextEntry}
+                    error={touched.password && !!errors.password}
+                    left={<TextInput.Icon icon={({ size, color }) => (
+                      <MaterialIcons name="lock" size={size + 4} />
+                    )} />}
+                    right={
+                      <TextInput.Icon
+                        icon={() => (
+                          <MaterialIcons
+                            name={secureTextEntry ? 'visibility-off' : 'visibility'}
+                            size={24}
+                          />
+                        )}
+                        onPress={() => setSecureTextEntry(!secureTextEntry)}
+                      />
+                    }
+                    style={styles.input}
+                    theme={{
+                      colors: {
+                        primary: theme.colors.primary,
+                        text: theme.colors.onSurface,
+                      },
+                    }}
+                  />
+                  {touched.password && errors.password && (
+                    <HelperText type="error" visible={!!errors.password}>
+                      {errors.password}
+                    </HelperText>
+                  )}
+                </View>
+
+                <Button
+                    mode="text"
+                    onPress={() => navigation.navigate('ForgotPassword')}
+                    style={styles.forgotPasswordButton}
+                    labelStyle={{ color: theme.colors.primary }}
+                    compact
+                  >
+                    Forgot Password?
+                  </Button>
+
+                <Button
+                  mode="contained"
+                  onPress={handleSubmit}
+                  style={[styles.button, { backgroundColor: theme.colors.primary }]}
+                  labelStyle={styles.buttonLabel}
+                  loading={loading}
+                  disabled={loading}
+                >
+                  {!loading && 'Sign In'}
+                </Button>
+
+                <View style={styles.footer}>
+                  <Text style={[styles.footerText, { color: theme.colors.onSurfaceVariant }]}>
+                    Don't have an account?{' '}
+                  </Text>
+                  <Button
+                    mode="text"
+                    onPress={() => navigation.navigate('SignUp')}
+                    labelStyle={{ color: theme.colors.primary }}
+                    compact
+                  >
+                    Sign Up
+                  </Button>
+                </View>
+              </View>
+            )}
+          </Formik>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  keyboardAvoidingView: {
+    flex: 1,
+  },
+  scrollView: {
+    flexGrow: 1,
     justifyContent: 'center',
-    padding: 20,
-    backgroundColor: '#fff',
+    padding: 24,
   },
   title: {
-    fontSize: 28,
+    fontSize: 32,
     fontWeight: 'bold',
-    marginBottom: 30,
     textAlign: 'center',
+    marginBottom: 8,
+  },
+  subtitle: {
+    fontSize: 16,
+    textAlign: 'center',
+    marginBottom: 32,
+  },
+  formContainer: {
+    width: '100%',
+  },
+  inputContainer: {
+    marginBottom: 16,
   },
   input: {
-    height: 50,
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 8,
-    paddingHorizontal: 15,
-    marginBottom: 15,
-    fontSize: 16,
+    backgroundColor: 'transparent',
   },
   button: {
-    backgroundColor: '#007AFF',
-    padding: 15,
+    marginTop: 24,
+    paddingVertical: 8,
     borderRadius: 8,
+  },
+  buttonLabel: {
+    fontSize: 16,
+    paddingVertical: 6,
+  },
+  forgotPasswordButton: {
+    alignSelf: 'flex-end',
+    marginTop: 0,
+    marginBottom: 8,
+    height: 36,
+  },
+  footer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
     alignItems: 'center',
-    marginTop: 10,
+    marginTop: 24,
   },
-  buttonDisabled: {
-    backgroundColor: '#A0D3FF',
-  },
-  buttonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  link: {
-    color: '#007AFF',
-    textAlign: 'center',
-    marginTop: 20,
-    fontSize: 16,
+  footerText: {
+    fontSize: 14,
   },
 });
