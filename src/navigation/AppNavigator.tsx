@@ -1,8 +1,7 @@
-import React, { useCallback } from 'react';
-import { Alert } from 'react-native';
+import React, { useCallback, useMemo } from 'react';
+import { Alert, View } from 'react-native';
 import { TouchableOpacity } from 'react-native';
-import MaterialIcons from '@react-native-vector-icons/material-icons';
-import { NavigationContainer } from '@react-navigation/native';
+import { NavigationContainer, DefaultTheme as NavigationDefaultTheme, DarkTheme as NavigationDarkTheme, useNavigation } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useAuth } from '../contexts/AuthContext';
 import { SignInScreen } from '../screens/auth/SignInScreen';
@@ -13,159 +12,189 @@ import { HomeScreen } from '../screens/HomeScreen';
 import TaskListScreen from '../screens/TaskListScreen';
 import AddEditTaskScreen from '../screens/AddEditTaskScreen';
 import { RootStackParamList } from '../types/navigation';
+import { useTheme, Provider as PaperProvider, MD3DarkTheme, MD3LightTheme } from 'react-native-paper';
+import { ThemeProvider, lightTheme, darkTheme, useThemeContext } from '../theme/ThemeContext';
+import ThemeToggle from '../components/common/ThemeToggle';
+import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
-export const AppNavigator = () => {
-  const { user, loading, signOut, isEmailVerified } = useAuth();
+// Custom header component with theme toggle
+const CustomHeaderRight = () => {
+  const { signOut } = useAuth();
+  const theme = useTheme();
+  const { isDark } = useThemeContext();
+  const navigation = useNavigation<any>();
+
+  return (
+    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+      <ThemeToggle />
+      <TouchableOpacity
+        onPress={() => {
+          Alert.alert(
+            'Logout',
+            'Are you sure you want to logout?',
+            [
+              {
+                text: 'Cancel',
+                style: 'cancel',
+              },
+              {
+                text: 'Logout',
+                style: 'destructive',
+                onPress: async () => {
+                  await signOut();
+                  navigation.reset({
+                    index: 0,
+                    routes: [{ name: 'SignIn' }],
+                  });
+                },
+              },
+            ],
+          );
+        }}
+        style={{
+          marginRight: 16,
+          padding: 8,
+          backgroundColor: isDark ? 'rgba(255, 255, 255, 0.5)' : 'rgba(0, 0, 0, 0.05)',
+          borderRadius: 20,
+          width: 40,
+          height: 40,
+          justifyContent: 'center',
+          alignItems: 'center',
+        }}
+        activeOpacity={0.7}
+      >
+        <MaterialIcons 
+          name="logout" 
+          size={24} 
+          color={isDark ? '#fff' : theme.colors.primary}
+          style={{
+            textShadowColor: isDark ? 'rgba(255, 255, 255, 0.5)' : 'rgba(0, 0, 0, 0.1)',
+            textShadowOffset: { width: 0, height: 1 },
+            textShadowRadius: 2,
+          }}
+        />
+      </TouchableOpacity>
+    </View>
+  );
+};
+
+const MainNavigator = () => {
+  const { user, loading, isEmailVerified } = useAuth();
+  const { theme, isDark } = useThemeContext();
+  
+  const navigationTheme = useMemo(
+    () => ({
+      ...(isDark ? NavigationDarkTheme : NavigationDefaultTheme),
+      colors: {
+        ...(isDark ? NavigationDarkTheme.colors : NavigationDefaultTheme.colors),
+        primary: theme.colors.primary,
+        background: theme.colors.background,
+        card: theme.colors.surface,
+        text: theme.colors.onSurface,
+        border: theme.colors.outline,
+        notification: theme.colors.error,
+      },
+    }),
+    [theme, isDark]
+  );
 
   if (loading) {
     return null;
   }
 
   return (
-    <NavigationContainer
-      theme={{
-        colors: {
-          primary: '#6200ee',
-          background: '#f5f5f5',
-          card: '#6200ee',
-          text: '#fff',
-          border: 'transparent',
-          notification: '#ff3d71',
-        },
-        dark: false,
-        fonts: {
-          regular: {
-            fontFamily: 'System',
-            fontWeight: '400',
-          },
-          medium: {
-            fontFamily: 'System',
-            fontWeight: '500',
-          },
-          bold: {
-            fontFamily: 'System',
-            fontWeight: '700',
-          },
-          heavy: {
-            fontFamily: 'System',
-            fontWeight: '800',
-          },
-        },
-      }}
-    >
-      <Stack.Navigator>
-        {user && isEmailVerified ? (
-          // Authenticated screens
-          <>
-            <Stack.Screen 
-              name="TaskList" 
-              component={TaskListScreen} 
-              options={({ navigation }) => ({
-                title: 'My Tasks',
-                headerShown: true,
-                headerBackVisible: false,
-                headerRight: () => (
-                  <TouchableOpacity
-                    onPress={() => {
-                      Alert.alert(
-                        'Logout',
-                        'Are you sure you want to logout?',
-                        [
-                          {
-                            text: 'Cancel',
-                            style: 'cancel',
-                          },
-                          {
-                            text: 'Logout',
-                            style: 'destructive',
-                            onPress: () => {
-                              signOut();
-                              navigation.reset({
-                                index: 0,
-                                routes: [{ name: 'SignIn' }],
-                              });
-                            },
-                          },
-                        ],
-                      );
-                    }}
-                    style={{
-                      marginRight: 16,
-                      padding: 8,
-                      backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                      borderRadius: 20,
-                      width: 40,
-                      height: 40,
-                      justifyContent: 'center',
-                      alignItems: 'center',
-                    }}
-                    activeOpacity={0.7}
-                  >
-                    <MaterialIcons 
-                      name="logout" 
-                      size={24} 
-                      color="#fff"
-                      style={{
-                        textShadowColor: 'rgba(0, 0, 0, 0.3)',
-                        textShadowOffset: { width: 0, height: 1 },
-                        textShadowRadius: 2,
-                      }}
-                    />
-                  </TouchableOpacity>
-                ),
-              })}
-            />
-            <Stack.Screen 
-              name="AddEditTask" 
-              component={AddEditTaskScreen}
-              options={{ 
-                title: 'Add Task',
-                headerShown: true,
-              }}
-            />
-          </>
-        ) : (
-          // Auth screens
-          <>
-            <Stack.Screen 
-              name="SignIn" 
-              component={SignInScreen} 
-              options={{ headerShown: false }} 
-            />
-            <Stack.Screen 
-              name="EmailVerification" 
-              component={EmailVerificationScreen} 
-              options={{ 
-                title: 'Verify Email',
-                headerBackVisible: false,
-                headerShown: false
-              }} 
-            />
-            <Stack.Screen 
-              name="SignUp" 
-              component={SignUpScreen} 
-              options={{ headerShown: false }}
-            />
-            <Stack.Screen 
-              name="ForgotPassword" 
-              component={ForgotPasswordScreen} 
-              options={{ 
-                title: 'Forgot Password',
-                headerShown: true,
-                headerStyle: {
-                  backgroundColor: '#6200ee',
-                },
-                headerTintColor: '#fff',
-                headerTitleStyle: {
-                  fontWeight: '600',
-                },
-              }}
-            />
-          </>
-        )}
-      </Stack.Navigator>
-    </NavigationContainer>
+    <PaperProvider theme={theme}>
+      <NavigationContainer theme={navigationTheme}>
+        <Stack.Navigator
+          screenOptions={{
+            headerStyle: {
+              backgroundColor: theme.colors.primary,
+            },
+            headerTintColor: theme.colors.surface,
+            headerTitleStyle: {
+              fontWeight: '600',
+              color: theme.colors.surface,
+            },
+            headerRight: () => <CustomHeaderRight />,
+          }}
+        >
+          {!user || !isEmailVerified ? (
+            // Auth screens
+            <>
+              <Stack.Screen 
+                name="SignIn" 
+                component={SignInScreen} 
+                options={{ 
+                  title: 'Sign In',
+                  headerShown: false,
+                }} 
+              />
+              <Stack.Screen 
+                name="SignUp" 
+                component={SignUpScreen} 
+                options={({ navigation }) => ({
+                  title: 'Create Account',
+                  headerShown: false,
+                  headerRight: () => null, // Hide theme toggle on auth screens
+                })} 
+              />
+              <Stack.Screen 
+                name="EmailVerification" 
+                component={EmailVerificationScreen} 
+                options={{ 
+                  headerShown: false,
+                  headerRight: () => null,
+                }}
+              />
+              <Stack.Screen 
+                name="ForgotPassword" 
+                component={ForgotPasswordScreen} 
+                options={{
+                  title: 'Forgot Password',
+                  headerShown: false,
+                  headerRight: () => null,
+                }}
+              />
+            </>
+          ) : (
+            // Authenticated screens
+            <>
+              <Stack.Screen 
+                name="Home" 
+                component={HomeScreen} 
+                options={{ headerShown: false }} 
+              />
+              <Stack.Screen 
+                name="TaskList" 
+                component={TaskListScreen} 
+                options={{ 
+                  title: 'My Tasks',
+                }} 
+              />
+              <Stack.Screen 
+                name="AddEditTask" 
+                component={AddEditTaskScreen} 
+                options={({ route }) => ({
+                  title: route.params?.taskId ? 'Edit Task' : 'Add Task',
+                  presentation: 'modal',
+                })} 
+              />
+            </>
+          )}
+        </Stack.Navigator>
+      </NavigationContainer>
+    </PaperProvider>
   );
 };
+
+export const AppNavigator = () => {
+  return (
+    <ThemeProvider>
+      <MainNavigator />
+    </ThemeProvider>
+  );
+};
+
+export default AppNavigator;

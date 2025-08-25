@@ -86,16 +86,23 @@ export const SignUpScreen = () => {
                     autoCapitalize="none"
                     keyboardType="email-address"
                     error={touched.email && !!errors.email}
-                    style={styles.input}
+                    style={[styles.input, { backgroundColor: theme.colors.surface }]}
                     left={<TextInput.Icon icon={({ size, color }) => (
-                        <MaterialIcons name="email" size={size + 4} />
+                        <MaterialIcons name="email" size={size + 4} color={theme.colors.onSurfaceVariant} />
                     )} />}
                     theme={{
                       colors: {
                         primary: theme.colors.primary,
                         text: theme.colors.onSurface,
+                        placeholder: theme.colors.onSurfaceVariant,
+                        background: theme.colors.surface,
+                        surface: theme.colors.surface,
+                        onSurfaceVariant: theme.colors.onSurfaceVariant,
+                        outline: theme.colors.outline,
                       },
+                      roundness: 8,
                     }}
+                    outlineStyle={{ borderColor: theme.colors.outline }}
                   />
                   {touched.email && errors.email && (
                     <HelperText type="error" visible={!!errors.email}>
@@ -113,9 +120,9 @@ export const SignUpScreen = () => {
                     mode="outlined"
                     secureTextEntry={secureTextEntry}
                     error={touched.password && !!errors.password}
-                    style={styles.input}
+                    style={[styles.input, { backgroundColor: theme.colors.surface }]}
                     left={<TextInput.Icon icon={({ size, color }) => (
-                      <MaterialIcons name="lock" size={size + 4} />
+                      <MaterialIcons name="lock" size={size + 4} color={theme.colors.onSurfaceVariant} />
                     )} />}
                     right={
                       <TextInput.Icon
@@ -151,9 +158,9 @@ export const SignUpScreen = () => {
                     mode="outlined"
                     secureTextEntry={confirmSecureTextEntry}
                     error={touched.confirmPassword && !!errors.confirmPassword}
-                    style={styles.input}
+                    style={[styles.input, { backgroundColor: theme.colors.surface }]}
                     left={<TextInput.Icon icon={({ size, color }) => (
-                      <MaterialIcons name="lock" size={size + 4} />
+                      <MaterialIcons name="lock" size={size + 4} color={theme.colors.onSurfaceVariant} />
                     )} />}
                     right={
                       <TextInput.Icon
@@ -184,7 +191,7 @@ export const SignUpScreen = () => {
                   mode="contained"
                   onPress={handleSubmit}
                   style={[styles.button, { backgroundColor: theme.colors.primary }]}
-                  labelStyle={styles.buttonLabel}
+                  labelStyle={[styles.buttonLabel, { color: theme.colors.onPrimary }]}
                   loading={isSubmitting}
                   disabled={isSubmitting}
                 >

@@ -80,15 +80,22 @@ export const SignInScreen = () => {
                     keyboardType="email-address"
                     error={touched.email && !!errors.email}
                     left={<TextInput.Icon icon={({ size, color }) => (
-                        <MaterialIcons name="email" size={size + 4} />
+                        <MaterialIcons name="email" size={size + 4} color={theme.colors.onSurfaceVariant} />
                     )} />}
-                    style={styles.input}
+                    style={[styles.input, { backgroundColor: theme.colors.surface }]}
                     theme={{
                       colors: {
                         primary: theme.colors.primary,
                         text: theme.colors.onSurface,
+                        placeholder: theme.colors.onSurfaceVariant,
+                        background: theme.colors.surface,
+                        surface: theme.colors.surface,
+                        onSurfaceVariant: theme.colors.onSurfaceVariant,
+                        outline: theme.colors.outline,
                       },
+                      roundness: 8,
                     }}
+                    outlineStyle={{ borderColor: theme.colors.outline }}
                   />
                   {touched.email && errors.email && (
                     <HelperText type="error" visible={!!errors.email}>
@@ -107,26 +114,34 @@ export const SignInScreen = () => {
                     secureTextEntry={secureTextEntry}
                     error={touched.password && !!errors.password}
                     left={<TextInput.Icon icon={({ size, color }) => (
-                      <MaterialIcons name="lock" size={size + 4} />
+                      <MaterialIcons name="lock" size={size + 4} color={theme.colors.onSurfaceVariant} />
                     )} />}
                     right={
                       <TextInput.Icon
-                        icon={() => (
+                        icon={({ size, color }) => (
                           <MaterialIcons
                             name={secureTextEntry ? 'visibility-off' : 'visibility'}
                             size={24}
+                            color={theme.colors.onSurfaceVariant}
                           />
                         )}
                         onPress={() => setSecureTextEntry(!secureTextEntry)}
                       />
                     }
-                    style={styles.input}
+                    style={[styles.input, { backgroundColor: theme.colors.surface }]}
                     theme={{
                       colors: {
                         primary: theme.colors.primary,
                         text: theme.colors.onSurface,
+                        placeholder: theme.colors.onSurfaceVariant,
+                        background: theme.colors.surface,
+                        surface: theme.colors.surface,
+                        onSurfaceVariant: theme.colors.onSurfaceVariant,
+                        outline: theme.colors.outline,
                       },
+                      roundness: 8,
                     }}
+                    outlineStyle={{ borderColor: theme.colors.outline }}
                   />
                   {touched.password && errors.password && (
                     <HelperText type="error" visible={!!errors.password}>
@@ -149,7 +164,8 @@ export const SignInScreen = () => {
                   onPress={handleSubmit}
                   loading={isSubmitting}
                   disabled={!isValid || isSubmitting}
-                  style={styles.button}
+                  style={[styles.button, { backgroundColor: theme.colors.primary }]}
+                  labelStyle={{ color: theme.colors.onPrimary }}
                 >
                   Sign In
                 </Button>
@@ -201,6 +217,7 @@ const styles = StyleSheet.create({
   },
   formContainer: {
     width: '100%',
+    backgroundColor: 'transparent',
   },
   inputContainer: {
     marginBottom: 16,
@@ -211,6 +228,7 @@ const styles = StyleSheet.create({
   button: {
     marginTop: 24,
     paddingVertical: 8,
+    borderRadius: 8,
   },
   forgotPasswordLink: {
     marginTop: 16,
@@ -229,6 +247,7 @@ const styles = StyleSheet.create({
   buttonLabel: {
     fontSize: 16,
     paddingVertical: 6,
+    color: 'white',
   },
   footer: {
     flexDirection: 'row',

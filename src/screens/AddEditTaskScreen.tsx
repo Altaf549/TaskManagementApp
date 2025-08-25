@@ -8,7 +8,10 @@ import {
 } from 'react-native';
 import {useNavigation, useRoute} from '@react-navigation/native';
 import {StackNavigationProp} from '@react-navigation/stack';
-import {TextInput, Button, Title, HelperText} from 'react-native-paper';
+import {TextInput, Button, Title, HelperText, useTheme} from 'react-native-paper';
+import MaterialIcons from '@react-native-vector-icons/material-icons';
+import type {MD3Theme} from 'react-native-paper/lib/typescript/types';
+import {useThemeContext} from '../theme/ThemeContext';
 import auth from '@react-native-firebase/auth';
 import {useTasks} from '../hooks/useTasks';
 import {Task} from '../models/Task';
@@ -26,6 +29,8 @@ const AddEditTaskScreen = () => {
   const navigation = useNavigation<AddEditTaskScreenNavigationProp>();
   const route = useRoute();
   const {taskId} = (route.params || {}) as {taskId?: string};
+  const paperTheme = useTheme();
+  const {theme, isDark} = useThemeContext();
   
   const {tasks, createTask, updateTask} = useTasks();
   
@@ -84,6 +89,8 @@ const AddEditTaskScreen = () => {
     }
   };
 
+  const styles = getStyles(isDark, paperTheme);
+  
   return (
     <KeyboardAvoidingView
       style={styles.container}
@@ -95,28 +102,81 @@ const AddEditTaskScreen = () => {
             {taskId ? 'Edit Task' : 'Add New Task'}
           </Title>
 
-          <TextInput
-            label="Title"
-            value={title}
-            onChangeText={setTitle}
-            mode="outlined"
-            style={styles.input}
-            maxLength={100}
-            disabled={isSubmitting}
-            error={!!error && !title.trim()}
-          />
+          <View style={styles.inputContainer}>
+            <TextInput
+              label="Title"
+              value={title}
+              onChangeText={setTitle}
+              mode="outlined"
+              maxLength={100}
+              disabled={isSubmitting}
+              error={!!error && !title.trim()}
+              left={
+                <TextInput.Icon 
+                  icon={({ size, color }) => (
+                    <MaterialIcons name="title" size={size + 4} color={theme.colors.onSurfaceVariant} />
+                  )} 
+                />
+              }
+              style={[styles.input, { backgroundColor: theme.colors.surface }]}
+              theme={{
+                colors: {
+                  primary: theme.colors.primary,
+                  text: theme.colors.onSurface,
+                  placeholder: theme.colors.onSurfaceVariant,
+                  background: theme.colors.surface,
+                  surface: theme.colors.surface,
+                  onSurfaceVariant: theme.colors.onSurfaceVariant,
+                  outline: theme.colors.outline,
+                },
+                roundness: 8,
+              }}
+              outlineStyle={{ borderColor: theme.colors.outline }}
+            />
+            {error && !title.trim() && (
+              <HelperText type="error" visible={!!error && !title.trim()}>
+                Title is required
+              </HelperText>
+            )}
+          </View>
 
-          <TextInput
-            label="Description (Optional)"
-            value={description}
-            onChangeText={setDescription}
-            mode="outlined"
-            multiline
-            numberOfLines={4}
-            style={[styles.input, styles.descriptionInput]}
-            maxLength={500}
-            disabled={isSubmitting}
-          />
+          <View style={styles.inputContainer}>
+            <TextInput
+              label="Description (Optional)"
+              value={description}
+              onChangeText={setDescription}
+              mode="outlined"
+              multiline
+              numberOfLines={4}
+              maxLength={500}
+              disabled={isSubmitting}
+              left={
+                <TextInput.Icon 
+                  icon={({ size, color }) => (
+                    <MaterialIcons name="description" size={size + 4} color={theme.colors.onSurfaceVariant} />
+                  )} 
+                />
+              }
+              style={[styles.input, { 
+                backgroundColor: theme.colors.surface,
+                minHeight: 100,
+                textAlignVertical: 'top',
+              }]}
+              theme={{
+                colors: {
+                  primary: theme.colors.primary,
+                  text: theme.colors.onSurface,
+                  placeholder: theme.colors.onSurfaceVariant,
+                  background: theme.colors.surface,
+                  surface: theme.colors.surface,
+                  onSurfaceVariant: theme.colors.onSurfaceVariant,
+                  outline: theme.colors.outline,
+                },
+                roundness: 8,
+              }}
+              outlineStyle={{ borderColor: theme.colors.outline }}
+            />
+          </View>
 
           {error && (
             <HelperText type="error" visible={!!error} style={styles.errorText}>
@@ -151,17 +211,17 @@ const AddEditTaskScreen = () => {
   );
 };
 
-const styles = StyleSheet.create({
+const getStyles = (isDark: boolean, theme: any) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: isDark ? theme.colors.surface : theme.colors.background,
   },
   scrollContainer: {
     flexGrow: 1,
     padding: 16,
   },
   form: {
-    backgroundColor: 'white',
+    backgroundColor: isDark ? theme.colors.surfaceVariant : theme.colors.surface,
     borderRadius: 8,
     padding: 16,
     elevation: 2,
@@ -169,9 +229,12 @@ const styles = StyleSheet.create({
   title: {
     marginBottom: 24,
     textAlign: 'center',
+    color: theme.colors.onSurface,
+  },
+  inputContainer: {
+    marginBottom: 16,
   },
   input: {
-    marginBottom: 16,
     backgroundColor: 'transparent',
   },
   descriptionInput: {
@@ -191,10 +254,10 @@ const styles = StyleSheet.create({
     marginHorizontal: 4,
   },
   cancelButton: {
-    borderColor: '#6200ee',
+    borderColor: theme.colors.primary,
   },
   submitButton: {
-    backgroundColor: '#6200ee',
+    backgroundColor: theme.colors.primary,
   },
 });
 

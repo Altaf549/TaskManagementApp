@@ -18,6 +18,7 @@ import MaterialIcons from '@react-native-vector-icons/material-icons';
 
 const TaskListScreen = () => {
   const theme = useTheme();
+  const styles = getStyles(theme);
   const navigation = useNavigation<NativeStackNavigationProp<AppStackParamList>>();
   const {signOut, user} = useAuth();
   const {
@@ -73,18 +74,20 @@ const TaskListScreen = () => {
   const renderTaskItem = ({item}: {item: Task}) => (
     <View style={[
       styles.taskCard,
-      item.isCompleted && styles.completedTask
+      item.isCompleted && styles.completedTask,
+      { borderLeftWidth: 4, borderLeftColor: item.isCompleted ? theme.colors.primary : 'transparent' }
     ]}>
       <View style={styles.taskContent}>
-      <MaterialIcons
-        name={item.isCompleted ? 'check-box' : 'check-box-outline-blank'}
-        size={24}
-        color={item.isCompleted ? '#4CAF50' : '#757575'}
-        style={styles.checkbox}
-        onPress={() => toggleTaskCompletion(item.id)}
-      />
-        <View style={styles.taskTextContainer}>
+        <MaterialIcons
+          name={item.isCompleted ? 'check-box' : 'check-box-outline-blank'}
+          size={24}
+          color={item.isCompleted ? theme.colors.primary : theme.colors.onSurfaceVariant}
+          style={styles.checkbox}
+          onPress={() => toggleTaskCompletion(item.id)}
+        />
+        <View style={styles.taskTextContainer} onTouchEnd={() => navigation.navigate('AddEditTask', {taskId: item.id})}>
           <Text 
+            variant="bodyLarge"
             style={[
               styles.taskTitle,
               item.isCompleted && styles.completedTitle
@@ -95,6 +98,7 @@ const TaskListScreen = () => {
           </Text>
           {item.description ? (
             <Text 
+              variant="bodyMedium"
               style={[
                 styles.taskDescription,
                 item.isCompleted && styles.completedDescription
@@ -104,24 +108,34 @@ const TaskListScreen = () => {
               {item.description}
             </Text>
           ) : null}
-          <Text style={styles.taskDate}>
+          <Text variant="labelSmall" style={styles.taskDate}>
             {format(new Date(item.updatedAt), 'MMM d, yyyy • h:mm a')}
           </Text>
         </View>
         <View style={styles.taskActions}>
           <IconButton
             icon={({ size, color }) => (
-              <MaterialIcons name="edit" size={size + 4} color="#B8860B" />
+              <MaterialIcons 
+                name="edit" 
+                size={size + 4} 
+                color={theme.colors.onSurfaceVariant} 
+              />
             )}
             onPress={() => navigation.navigate('AddEditTask', {taskId: item.id})}
             style={styles.actionButton}
+            size={20}
           />
           <IconButton
             icon={({ size, color }) => (
-              <MaterialIcons name="delete" size={size + 4} color="red" />
+              <MaterialIcons 
+                name="delete" 
+                size={size + 4} 
+                color={theme.colors.error} 
+              />
             )}
             onPress={() => handleDeleteTask(item.id, item.title)}
             style={styles.actionButton}
+            size={20}
           />
         </View>
       </View>
@@ -165,35 +179,47 @@ const TaskListScreen = () => {
         ListEmptyComponent={
           !isLoading ? (
             <View style={styles.emptyContainer}>
-              <Text style={styles.emptyText}>No tasks yet. Add one to get started!</Text>
+              <MaterialIcons 
+                name="check-circle-outline" 
+                size={48} 
+                color={theme.colors.onSurfaceVariant}
+                style={{ opacity: 0.5, marginBottom: 16 }}
+              />
+              <Text variant="titleMedium" style={styles.emptyText}>
+                No tasks yet
+              </Text>
+              <Text style={[styles.emptyText, { marginTop: 8, fontSize: 14 }]}>
+                Tap the + button to add a new task
+              </Text>
             </View>
           ) : null
         }
         style={styles.flatList}
       />
       <FAB
-        style={styles.fab}
+        style={[styles.fab, { backgroundColor: theme.colors.primary }]}
         icon={({ size, color }) => (
-          <MaterialIcons name="add" size={size + 4} color="white" />
+          <MaterialIcons name="add" size={size + 4} color={theme.colors.onPrimary} />
         )}
         onPress={() => navigation.navigate('AddEditTask')}
+        color={theme.colors.onPrimary}
       />
     </View>
   );
 };
 
-const styles = StyleSheet.create({
+const getStyles = (theme: any) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8f9fa',
-    padding: 16,
+    backgroundColor: theme.colors.background,
+    marginBottom: 50
   },
   taskCard: {
-    backgroundColor: 'white',
+    backgroundColor: theme.colors.surface,
     borderRadius: 12,
     marginBottom: 12,
     elevation: 2,
-    shadowColor: '#000',
+    shadowColor: theme.colors.shadow,
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
     shadowRadius: 2,
@@ -201,23 +227,29 @@ const styles = StyleSheet.create({
   taskContent: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 12,
+    padding: 16,
   },
   taskTextContainer: {
     flex: 1,
-    marginLeft: 12,
+    marginLeft: 16,
     marginRight: 8,
   },
   taskTitle: {
     fontSize: 16,
     fontWeight: '500',
-    color: '#212121',
+    color: theme.colors.onSurface,
     marginBottom: 4,
   },
   taskDescription: {
     fontSize: 14,
-    color: '#616161',
+    color: theme.colors.onSurfaceVariant,
     marginBottom: 4,
+  },
+  taskDate: {
+    fontSize: 12,
+    color: theme.colors.onSurfaceVariant,
+    opacity: 0.7,
+    marginTop: 2,
   },
   actionButton: {
     margin: 0,
@@ -230,105 +262,88 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: theme.colors.background,
   },
   errorContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
+    backgroundColor: theme.colors.background,
   },
   errorText: {
-    color: 'red',
+    color: theme.colors.error,
     marginBottom: 20,
     textAlign: 'center',
   },
   appBar: {
     elevation: 0,
-    paddingRight: 8,
+    backgroundColor: theme.colors.surface,
   },
   welcomeText: {
-    color: 'white',
+    color: theme.colors.onSurfaceVariant,
     fontSize: 14,
-    opacity: 0.9,
   },
   emailText: {
-    color: 'white',
+    color: theme.colors.onSurface,
     fontSize: 16,
     fontWeight: 'bold',
     maxWidth: 200,
   },
   avatar: {
     marginLeft: 8,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-  },
-  taskItem: {
-    paddingVertical: 16,
-    paddingHorizontal: 20,
-    marginVertical: 6,
-    marginHorizontal: 12,
-    borderRadius: 12,
-    backgroundColor: '#fff',
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
+    backgroundColor: theme.colors.primaryContainer,
   },
   completedTask: {
     opacity: 0.7,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: theme.colors.surfaceVariant,
   },
   completedTitle: {
     textDecorationLine: 'line-through',
-    color: '#9e9e9e',
-    fontWeight: '400',
+    color: theme.colors.onSurfaceVariant,
+    opacity: 0.7,
   },
   completedDescription: {
     textDecorationLine: 'line-through',
-    color: '#bdbdbd',
+    color: theme.colors.onSurfaceVariant,
+    opacity: 0.5,
   },
   flatList: {
     flex: 1,
-    paddingBottom: 80, // Add padding to account for bottom navigation and FAB
   },
   listContent: {
     padding: 16,
+    paddingBottom: 24,
   },
   taskActions: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
   },
-  taskDate: {
-    fontSize: 12,
-    color: '#9e9e9e',
-    marginRight: 4,
-    fontStyle: 'italic',
+  fab: {
+    position: 'absolute',
+    margin: 16,
+    right: 0,
+    bottom: 0,
+    backgroundColor: theme.colors.primary,
   },
   emptyContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 40,
+    padding: 32,
   },
   emptyText: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 8,
-    color: '#757575',
+    textAlign: 'center',
+    color: theme.colors.onSurfaceVariant,
+    fontSize: 16,
+    lineHeight: 24,
   },
   emptySubtext: {
     fontSize: 14,
-    color: '#9e9e9e',
+    color: theme.colors.onSurfaceVariant,
+    opacity: 0.7,
     textAlign: 'center',
-  },
-  fab: {
-    position: 'absolute',
-    margin: 16,
-    right: 0,
-    bottom: 70, // Raise FAB to be above the bottom navigation
-    backgroundColor: '#6200ee',
-    elevation: 4,
   },
   menuButton: {
     marginRight: 8,
