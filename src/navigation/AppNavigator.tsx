@@ -15,7 +15,7 @@ import { RootStackParamList } from '../types/navigation';
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 export const AppNavigator = () => {
-  const { user, loading } = useAuth();
+  const { user, loading, signOut } = useAuth();
 
   if (loading) {
     return null;
@@ -79,7 +79,6 @@ export const AppNavigator = () => {
                             text: 'Logout',
                             style: 'destructive',
                             onPress: () => {
-                              const { signOut } = useAuth();
                               signOut();
                               navigation.reset({
                                 index: 0,
