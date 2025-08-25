@@ -12,8 +12,8 @@ import { HomeScreen } from '../screens/HomeScreen';
 import TaskListScreen from '../screens/TaskListScreen';
 import AddEditTaskScreen from '../screens/AddEditTaskScreen';
 import { RootStackParamList } from '../types/navigation';
-import { useTheme, Provider as PaperProvider, MD3DarkTheme, MD3LightTheme } from 'react-native-paper';
-import { ThemeProvider, lightTheme, darkTheme, useThemeContext } from '../theme/ThemeContext';
+import { useTheme, Provider as PaperProvider} from 'react-native-paper';
+import { ThemeProvider, useThemeContext } from '../theme/ThemeContext';
 import ThemeToggle from '../components/common/ThemeToggle';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 
@@ -56,7 +56,7 @@ const CustomHeaderRight = () => {
         style={{
           marginRight: 16,
           padding: 8,
-          backgroundColor: isDark ? 'rgba(255, 255, 255, 0.5)' : 'rgba(0, 0, 0, 0.05)',
+          backgroundColor: isDark ? 'rgba(0, 0, 0, 0.5)' : 'rgba(255, 255, 255, 0.5)',
           borderRadius: 20,
           width: 40,
           height: 40,
@@ -70,7 +70,7 @@ const CustomHeaderRight = () => {
           size={24} 
           color={isDark ? '#fff' : theme.colors.primary}
           style={{
-            textShadowColor: isDark ? 'rgba(255, 255, 255, 0.5)' : 'rgba(0, 0, 0, 0.1)',
+            textShadowColor: isDark ? 'rgba(0, 0, 0, 0.)' : 'rgba(255, 255, 255, 0.5)',
             textShadowOffset: { width: 0, height: 1 },
             textShadowRadius: 2,
           }}
